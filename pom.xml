@@ -1,80 +1,177 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.jakublesko</groupId>
-    <artifactId>jwt-security</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+  <groupId>com.jakublesko</groupId>
+  <artifactId>jwt-security</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>war</packaging>
 
-    <name>Spring Security JWT example</name>
-    <description>An example API with JWT authentication and authorization</description>
+  <name>Spring Security JWT example</name>
+  <description>An example API with JWT authentication and authorization</description>
 
-    <parent>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.2.5.RELEASE</version>
+    <relativePath/>
+  </parent>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <java.version>11</java.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-tomcat</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-text</artifactId>
+      <version>1.6</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+      <version>0.10.5</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <version>0.10.5</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+      <version>0.10.5</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
         <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.1.1.RELEASE</version>
-        <relativePath/>
-    </parent>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <profiles>
+    <profile>
+      <id>spring-boot</id>
+      
+      <dependencies>
+        <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-tomcat</artifactId>
+        </dependency>
+      </dependencies>
+      
+      <build>
+        <defaultGoal>clean package spring-boot:run</defaultGoal>
+      </build>
+    </profile>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>11</java.version>
-    </properties>
+    <profile>
+      <id>payara</id>
+      
+      <properties>
+        <payara.version>5.201</payara.version>
+        <javax.faces.version>2.3.14</javax.faces.version>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
+        <log.directory>${project.build.directory}/log</log.directory>
 
+        <cargo.deployable.ping.timeout>60000</cargo.deployable.ping.timeout>
+        <cargo.log>${log.directory}/cargo.log</cargo.log>
+        <cargo.output>${log.directory}/cargo-output.log</cargo.output>
+      </properties>
+
+      <dependencies>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-text</artifactId>
-            <version>1.6</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>0.10.5</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>0.10.5</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>0.10.5</version>
-            <scope>runtime</scope>
+          <groupId>com.fasterxml.jackson.dataformat</groupId>
+          <artifactId>jackson-dataformat-xml</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+          <groupId>org.glassfish</groupId>
+          <artifactId>jakarta.faces</artifactId>
+          <version>${javax.faces.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+      </dependencies>
 
-    <build>
+      <build>
+        <defaultGoal>clean package cargo:run</defaultGoal>
+
         <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
+          <plugin>
+            <groupId>org.codehaus.cargo</groupId>
+            <artifactId>cargo-maven2-plugin</artifactId>
+            <version>1.7.11</version>
+            <configuration>
+              <container>
+                <containerId>payara</containerId>
+                <zipUrlInstaller>
+                  <url>https://repo1.maven.org/maven2/fish/payara/distributions/payara/${payara.version}/payara-${payara.version}.zip</url>
+                  <downloadDir>${settings.localRepository}/org/codehaus/cargo/cargo-container-archives</downloadDir>
+                  <extractDir>${project.build.directory}/cargo/extract</extractDir>
+                </zipUrlInstaller>
+                <log>${cargo.log}</log>
+                <output>${cargo.output}</output>
+              </container>
+              <configuration>
+                <type>standalone</type>
+                <properties>
+                  <cargo.glassfish.removeDefaultDatasource>false</cargo.glassfish.removeDefaultDatasource>
+                  <cargo.jvmargs>-Dspring.profiles.active=embedded
+                    -XX:+CMSClassUnloadingEnabled -XX:+UseG1GC -Xmx2048m -Xms1024m</cargo.jvmargs>
+                </properties>
+              </configuration>
+              <deployables>
+                <deployable>
+                  <location>${project.build.directory}/${project.build.finalName}</location>
+                  <properties>
+                    <context>/</context>
+                  </properties>
+                </deployable>
+              </deployables>
+            </configuration>
+          </plugin>
         </plugins>
-    </build>
+      </build>
+    </profile>
+  </profiles>
 </project>
