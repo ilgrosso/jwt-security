@@ -1,4 +1,4 @@
-package com.jakublesko.jwtsecurity.security;
+package com.jakublesko.jwtsecurity.controller;
 
 import com.jakublesko.jwtsecurity.constants.SecurityConstants;
 import io.jsonwebtoken.Jwts;
@@ -7,41 +7,36 @@ import io.jsonwebtoken.security.Keys;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+@RequestMapping("/api/authenticate")
+public class AuthenticationController {
 
     private final AuthenticationManager authenticationManager;
 
-    public JwtAuthenticationFilter(final AuthenticationManager authenticationManager) {
+    public AuthenticationController(final AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
-
-        setFilterProcessesUrl(SecurityConstants.AUTH_LOGIN_URL);
     }
 
-    @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
-        String username = request.getParameter(SPRING_SECURITY_FORM_USERNAME_KEY);
-        String password = request.getParameter(SPRING_SECURITY_FORM_PASSWORD_KEY);
+    @PostMapping
+    public ResponseEntity<Void> user(final HttpServletRequest request) {
+        String username = request.getParameter(
+                UsernamePasswordAuthenticationFilter.SPRING_SECURITY_FORM_USERNAME_KEY);
+        String password = request.getParameter(
+                UsernamePasswordAuthenticationFilter.SPRING_SECURITY_FORM_PASSWORD_KEY);
 
-        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-    }
-
-    @Override
-    protected void successfulAuthentication(
-            final HttpServletRequest request,
-            final HttpServletResponse response,
-            final FilterChain filterChain,
-            final Authentication authentication) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password));
 
         User user = ((User) authentication.getPrincipal());
 
@@ -62,6 +57,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 .claim("rol", roles)
                 .compact();
 
-        response.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.TOKEN_PREFIX + token);
+        return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, SecurityConstants.TOKEN_PREFIX + token).build();
     }
 }

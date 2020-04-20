@@ -1,6 +1,6 @@
 package com.jakublesko.jwtsecurity.configuration;
 
-import com.jakublesko.jwtsecurity.security.JwtAuthenticationFilter;
+import com.jakublesko.jwtsecurity.controller.AuthenticationController;
 import com.jakublesko.jwtsecurity.security.JwtAuthorizationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -81,7 +81,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 httpBasic().authenticationEntryPoint(basicAuthenticationEntryPoint()).
                 authenticationDetailsSource(authenticationDetailsSource()).and().
                 exceptionHandling().accessDeniedHandler(accessDeniedHandler()).and().
-                addFilterBefore(new JwtAuthenticationFilter(authenticationManager()), BasicAuthenticationFilter.class).
                 addFilterBefore(new JwtAuthorizationFilter(authenticationManager()), BasicAuthenticationFilter.class).
                 headers().disable().
                 csrf().disable();
@@ -115,5 +114,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
 
         return source;
+    }
+
+    @Bean
+    public AuthenticationController authenticationController() throws Exception {
+        return new AuthenticationController(authenticationManager());
     }
 }
