@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.Base64;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -24,19 +25,13 @@ public class AuthenticationITCase {
         assertEquals("Hello from public API controller", response.getBody());
     }
 
-    private void authenticated(final String whoyes, final String whonot) {
-        ResponseEntity<String> response = new RestTemplate().postForEntity(
-                BASE_URL + "authenticate?username={u}&password={p}", null, String.class, whoyes, "password");
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        String authorization = response.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        assertNotNull(authorization);
-
+    private void authenticated(final String whoyes, final String whonot, final String authorization) {
         HttpHeaders reqHeaders = new HttpHeaders();
         reqHeaders.add(HttpHeaders.AUTHORIZATION, authorization);
         HttpEntity<String> entity = new HttpEntity<>(null, reqHeaders);
 
-        response = new RestTemplate().exchange(BASE_URL + "private/" + whoyes, HttpMethod.GET, entity, String.class);
+        ResponseEntity<String> response =
+                new RestTemplate().exchange(BASE_URL + "private/" + whoyes, HttpMethod.GET, entity, String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Hello from private API controller for " + whoyes.toUpperCase(), response.getBody());
 
@@ -44,13 +39,38 @@ public class AuthenticationITCase {
                 () -> new RestTemplate().exchange(BASE_URL + "private/" + whonot, HttpMethod.GET, entity, String.class));
     }
 
-    @Test
-    public void user() {
-        authenticated("user", "admin");
+    private String basic(final String who) {
+        return "Basic " + Base64.getEncoder().encodeToString((who + ":password").getBytes());
     }
 
     @Test
-    public void admin() {
-        authenticated("admin", "user");
+    public void basic_user() {
+        authenticated("user", "admin", basic("user"));
+    }
+
+    @Test
+    public void basic_admin() {
+        authenticated("admin", "user", basic("admin"));
+    }
+
+    private String jwt(final String who) {
+        ResponseEntity<String> response = new RestTemplate().postForEntity(
+                BASE_URL + "authenticate?username={u}&password={p}", null, String.class, who, "password");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        String authorization = response.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        assertNotNull(authorization);
+
+        return authorization;
+    }
+
+    @Test
+    public void jwt_user() {
+        authenticated("user", "admin", jwt("user"));
+    }
+
+    @Test
+    public void jwt_admin() {
+        authenticated("admin", "user", jwt("admin"));
     }
 }
