@@ -14,7 +14,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,9 +37,7 @@ public class AuthenticationController {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password));
 
-        User user = ((User) authentication.getPrincipal());
-
-        List<String> roles = user.getAuthorities()
+        List<String> roles = authentication.getAuthorities()
                 .stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
@@ -52,7 +49,7 @@ public class AuthenticationController {
                 .setHeaderParam("typ", SecurityConstants.TOKEN_TYPE)
                 .setIssuer(SecurityConstants.TOKEN_ISSUER)
                 .setAudience(SecurityConstants.TOKEN_AUDIENCE)
-                .setSubject(user.getUsername())
+                .setSubject(username)
                 .setExpiration(new Date(System.currentTimeMillis() + 864000000))
                 .claim("rol", roles)
                 .compact();

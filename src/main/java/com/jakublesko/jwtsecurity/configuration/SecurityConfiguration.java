@@ -2,6 +2,7 @@ package com.jakublesko.jwtsecurity.configuration;
 
 import com.jakublesko.jwtsecurity.controller.AuthenticationController;
 import com.jakublesko.jwtsecurity.security.JwtAuthorizationFilter;
+import com.jakublesko.jwtsecurity.security.UsernamePasswordAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -12,8 +13,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
@@ -24,9 +23,6 @@ import org.springframework.security.web.context.NullSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.firewall.DefaultHttpFirewall;
 import org.springframework.security.web.firewall.HttpFirewall;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -86,34 +82,19 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 csrf().disable();
     }
 
+    @Bean
+    public UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider() {
+        return new UsernamePasswordAuthenticationProvider();
+    }
+
     @Override
-    public void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("user")
-                .password(passwordEncoder().encode("password"))
-                .authorities("USER")
-                .and()
-                .withUser("admin")
-                .password(passwordEncoder().encode("password"))
-                .authorities("ADMIN");
+    public void configure(AuthenticationManagerBuilder builder) throws Exception {
+        builder.authenticationProvider(usernamePasswordAuthenticationProvider());
     }
 
     @Bean
     public GrantedAuthorityDefaults grantedAuthorityDefaults() {
         return new GrantedAuthorityDefaults(""); // Remove the ROLE_ prefix
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
-
-        return source;
     }
 
     @Bean
