@@ -11,16 +11,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-public class AuthenticationITCase {
+public abstract class AbstractAuthenticationTest {
 
-    private static final String BASE_URL = "http://localhost:8080/api/";
+    protected abstract String getBaseUrl();
+
+    protected abstract Class<? extends Throwable> forbiddenException();
 
     @Test
     public void anonymous() {
-        ResponseEntity<String> response = new RestTemplate().getForEntity(BASE_URL + "public", String.class);
+        ResponseEntity<String> response = new RestTemplate().getForEntity(getBaseUrl() + "public", String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Hello from public API controller", response.getBody());
     }
@@ -31,12 +32,12 @@ public class AuthenticationITCase {
         HttpEntity<String> entity = new HttpEntity<>(null, reqHeaders);
 
         ResponseEntity<String> response =
-                new RestTemplate().exchange(BASE_URL + "private/" + whoyes, HttpMethod.GET, entity, String.class);
+                new RestTemplate().exchange(getBaseUrl() + "private/" + whoyes, HttpMethod.GET, entity, String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Hello from private API controller for " + whoyes.toUpperCase(), response.getBody());
 
-        assertThrows(HttpServerErrorException.InternalServerError.class,
-                () -> new RestTemplate().exchange(BASE_URL + "private/" + whonot, HttpMethod.GET, entity, String.class));
+        assertThrows(forbiddenException(), () -> new RestTemplate().exchange(
+                getBaseUrl() + "private/" + whonot, HttpMethod.GET, entity, String.class));
     }
 
     private String basic(final String who) {
@@ -55,7 +56,7 @@ public class AuthenticationITCase {
 
     private String jwt(final String who) {
         ResponseEntity<String> response = new RestTemplate().postForEntity(
-                BASE_URL + "authenticate?username={u}&password={p}", null, String.class, who, "password");
+                getBaseUrl() + "authenticate?username={u}&password={p}", null, String.class, who, "password");
         assertEquals(HttpStatus.OK, response.getStatusCode());
 
         String authorization = response.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
