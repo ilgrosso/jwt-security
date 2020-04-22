@@ -2,42 +2,39 @@ package com.jakublesko.jwtsecurity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Base64;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import org.apache.cxf.jaxrs.client.WebClient;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
 
 public abstract class AbstractAuthenticationTest {
 
     protected abstract String getBaseUrl();
 
-    protected abstract Class<? extends Throwable> forbiddenException();
-
     @Test
     public void anonymous() {
-        ResponseEntity<String> response = new RestTemplate().getForEntity(getBaseUrl() + "public", String.class);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Hello from public API controller", response.getBody());
+        Response response = WebClient.create(getBaseUrl()).path("public").get();
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        assertEquals("Hello from public API controller", response.readEntity(String.class));
+
+        response = WebClient.create(getBaseUrl()).path("private").path("user").get();
+        assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), response.getStatus());
+
+        response = WebClient.create(getBaseUrl()).path("private").path("admin").get();
+        assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), response.getStatus());
     }
 
     private void authenticated(final String whoyes, final String whonot, final String authorization) {
-        HttpHeaders reqHeaders = new HttpHeaders();
-        reqHeaders.add(HttpHeaders.AUTHORIZATION, authorization);
-        HttpEntity<String> entity = new HttpEntity<>(null, reqHeaders);
+        Response response = WebClient.create(getBaseUrl()).path("private").path(whoyes).
+                header(HttpHeaders.AUTHORIZATION, authorization).get();
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        assertEquals("Hello from private API controller for " + whoyes.toUpperCase(), response.readEntity(String.class));
 
-        ResponseEntity<String> response =
-                new RestTemplate().exchange(getBaseUrl() + "private/" + whoyes, HttpMethod.GET, entity, String.class);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Hello from private API controller for " + whoyes.toUpperCase(), response.getBody());
-
-        assertThrows(forbiddenException(), () -> new RestTemplate().exchange(
-                getBaseUrl() + "private/" + whonot, HttpMethod.GET, entity, String.class));
+        response = WebClient.create(getBaseUrl()).path("private").path(whonot).
+                header(HttpHeaders.AUTHORIZATION, authorization).get();
+        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
     }
 
     private String basic(final String who) {
@@ -55,11 +52,11 @@ public abstract class AbstractAuthenticationTest {
     }
 
     private String jwt(final String who) {
-        ResponseEntity<String> response = new RestTemplate().postForEntity(
-                getBaseUrl() + "authenticate?username={u}&password={p}", null, String.class, who, "password");
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Response response = WebClient.create(getBaseUrl()).path("authenticate").
+                query("username", who).query("password", "password").post(null);
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
-        String authorization = response.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        String authorization = response.getHeaderString(HttpHeaders.AUTHORIZATION);
         assertNotNull(authorization);
 
         return authorization;

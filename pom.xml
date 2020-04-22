@@ -19,6 +19,8 @@
   </parent>
 
   <properties>
+    <cxf.version>3.3.6</cxf.version>
+
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>11</java.version>
@@ -26,18 +28,19 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-spring-boot-starter-jaxrs</artifactId>
+      <version>${cxf.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-starter-tomcat</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
 
     <dependency>
@@ -84,10 +87,27 @@
       <artifactId>spring-security-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-rs-client</artifactId>
+      <version>${cxf.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.2</version>
+        <configuration>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <encoding>utf-8</encoding>
+          <runOrder>alphabetical</runOrder>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
@@ -98,16 +118,32 @@
   <profiles>
     <profile>
       <id>spring-boot</id>
-      
+
+      <properties>
+        <skipTests>true</skipTests>
+      </properties>
+
       <dependencies>
         <dependency>
           <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot-starter-tomcat</artifactId>
+          <artifactId>spring-boot-starter-undertow</artifactId>
         </dependency>
       </dependencies>
       
       <build>
         <defaultGoal>clean package spring-boot:run</defaultGoal>
+
+        <plugins>
+          <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <configuration>
+              <jvmArguments>
+                -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n
+              </jvmArguments>
+            </configuration>
+          </plugin>
+        </plugins>        
       </build>
     </profile>
 
@@ -123,6 +159,8 @@
         <cargo.deployable.ping.timeout>60000</cargo.deployable.ping.timeout>
         <cargo.log>${log.directory}/cargo.log</cargo.log>
         <cargo.output>${log.directory}/cargo-output.log</cargo.output>
+
+        <skipTests>true</skipTests>
       </properties>
 
       <dependencies>

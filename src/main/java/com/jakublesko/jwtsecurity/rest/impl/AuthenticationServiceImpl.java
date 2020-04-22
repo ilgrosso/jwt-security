@@ -1,39 +1,30 @@
-package com.jakublesko.jwtsecurity.controller;
+package com.jakublesko.jwtsecurity.rest.impl;
 
 import com.jakublesko.jwtsecurity.constants.SecurityConstants;
+import com.jakublesko.jwtsecurity.rest.api.AuthenticationService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.stereotype.Service;
 
-@RequestMapping("/api/authenticate")
-public class AuthenticationController {
+@Service
+public class AuthenticationServiceImpl implements AuthenticationService {
 
-    private final AuthenticationManager authenticationManager;
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
-    public AuthenticationController(final AuthenticationManager authenticationManager) {
-        this.authenticationManager = authenticationManager;
-    }
-
-    @PostMapping
-    public ResponseEntity<Void> user(final HttpServletRequest request) {
-        String username = request.getParameter(
-                UsernamePasswordAuthenticationFilter.SPRING_SECURITY_FORM_USERNAME_KEY);
-        String password = request.getParameter(
-                UsernamePasswordAuthenticationFilter.SPRING_SECURITY_FORM_PASSWORD_KEY);
-
+    @Override
+    public Response authenticate(final String username, final String password) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password));
 
@@ -54,6 +45,6 @@ public class AuthenticationController {
                 .claim("rol", roles)
                 .compact();
 
-        return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, SecurityConstants.TOKEN_PREFIX + token).build();
+        return Response.ok().header(HttpHeaders.AUTHORIZATION, SecurityConstants.TOKEN_PREFIX + token).build();
     }
 }

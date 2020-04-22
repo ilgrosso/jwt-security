@@ -1,9 +1,10 @@
 package com.jakublesko.jwtsecurity.configuration;
 
-import com.jakublesko.jwtsecurity.controller.AuthenticationController;
 import com.jakublesko.jwtsecurity.security.JwtAuthorizationFilter;
+import com.jakublesko.jwtsecurity.security.SyncopeAccessDeniedHandler;
 import com.jakublesko.jwtsecurity.security.UsernamePasswordAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,8 +15,6 @@ import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
@@ -62,11 +61,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return new WebAuthenticationDetailsSource();
     }
 
-    @Bean
-    public AccessDeniedHandler accessDeniedHandler() {
-        return new AccessDeniedHandlerImpl();
-    }
-
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests().
@@ -76,7 +70,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 anonymous().principal("anonymous").and().
                 httpBasic().authenticationEntryPoint(basicAuthenticationEntryPoint()).
                 authenticationDetailsSource(authenticationDetailsSource()).and().
-                exceptionHandling().accessDeniedHandler(accessDeniedHandler()).and().
+                exceptionHandling().accessDeniedHandler(new SyncopeAccessDeniedHandler()).and().
                 addFilterBefore(new JwtAuthorizationFilter(authenticationManager()), BasicAuthenticationFilter.class).
                 headers().disable().
                 csrf().disable();
@@ -98,7 +92,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public AuthenticationController authenticationController() throws Exception {
-        return new AuthenticationController(authenticationManager());
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
     }
 }

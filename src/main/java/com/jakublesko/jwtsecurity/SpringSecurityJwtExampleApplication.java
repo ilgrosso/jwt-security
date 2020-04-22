@@ -12,6 +12,11 @@ public class SpringSecurityJwtExampleApplication extends SpringBootServletInitia
         SpringApplication.run(SpringSecurityJwtExampleApplication.class, args);
     }
 
+    public SpringSecurityJwtExampleApplication() {
+        super();
+        setRegisterErrorPageFilter(false);
+    }
+
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
         return application.sources(SpringSecurityJwtExampleApplication.class);
